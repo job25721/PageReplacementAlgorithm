@@ -1,16 +1,8 @@
 package os.cmu;
 
-import java.sql.Array;
 import java.util.*;
 
 public class Algorithms implements algorithmMethod {
-    //test cases
-    public String[] referenceString1 = {"7","0","1","2","0","3","0","4","2","3","0","3","1","2","0"};
-    public String[] referenceString2 = {"7","0","1","2","0","3","0","4","2","3","0","3","2","1","2","0","1","7","0","1"};
-    public String[] referenceString3 = {"7","0","1","2","0","3","0","4","2","3","0","3","2","1","2","0","1","7"};
-    public String[] BeladyAnomaly = {"1", "2", "3", "4", "1", "2", "5", "1", "2", "3", "4", "5" };
-
-
     public List<String> frame(int n){
         List <String> frame = new ArrayList<>(n);
         for(int i=0;i<n;i++){
@@ -20,9 +12,8 @@ public class Algorithms implements algorithmMethod {
     }
 
     @Override
-    public void BeladyAnomaly(int frameSize,String Algorithm,String[] referenceString){
+    public int BeladyAnomaly(int frameSize,String Algorithm,String[] referenceString){
         int pageFault = 0;
-        String cas = Algorithm;
         if(Algorithm == "FIFO")
             pageFault = FIFO(referenceString,frameSize,false);
         else if(Algorithm== "LRU")
@@ -31,13 +22,13 @@ public class Algorithms implements algorithmMethod {
             pageFault = Optimal(referenceString,frameSize,false);
         else
             System.out.println("Please select FIFO,LRU or Optimal");
-
-        System.out.println("Frame size = " +frameSize+" Pagefault = " +pageFault);
+        System.out.println("Pagefault = " +pageFault);
+        return pageFault;
     }
 
     @Override
     public int FIFO(String[] referenceString,int n,boolean printProcess){
-        int pageFaultcount = 0;
+        int pageFaultCount = 0;
         List <String> frame = frame(n);
         List <String> FIFO = new ArrayList<>();
         int fifoCount = 0;
@@ -50,7 +41,7 @@ public class Algorithms implements algorithmMethod {
             }else{
                 if (printProcess)
                     System.out.print(current+"->Page fault : ");
-                pageFaultcount++;
+                pageFaultCount++;
                 int targetIndex = -1;
                 if(frame.contains("")){
                     targetIndex = frame.indexOf("");
@@ -65,12 +56,12 @@ public class Algorithms implements algorithmMethod {
                 System.out.println(frame);
             count++;
         }
-        return pageFaultcount;
+        return pageFaultCount;
     }
 
     @Override
     public int LRU(String[] referenceString,int n,boolean printProcess) {
-        int pageFaultcount = 0;
+        int pageFaultCount = 0;
         List<String> frame = frame(n);
         LinkedList<String> LRU = new LinkedList<>();
 
@@ -85,7 +76,7 @@ public class Algorithms implements algorithmMethod {
             }else{
                 if (printProcess)
                     System.out.print(current+"->Page fault : ");
-                pageFaultcount++;
+                pageFaultCount++;
                 int targetIndex = -1;
                 if(frame.contains("")){
                     targetIndex = frame.indexOf("");
@@ -99,28 +90,32 @@ public class Algorithms implements algorithmMethod {
                 System.out.println(frame);
             count++;
         }
-        return pageFaultcount;
+        return pageFaultCount;
     }
 
     @Override
     public int Optimal(String[] referenceString,int n,boolean printProcess) {
-        int pageFaultcount = 0;
+        int pageFaultCount = 0;
         List<String> frame = frame(n);
-        int[] frameCount = new int[n];
+        int[] framePeriod = new int[n];
         //count init
-        for(int i=0;i<n;i++){
-            frameCount[i] = 0;
+        int c =0;
+        for(int i=n;i>0;i--){
+            framePeriod[c] += i;
+            c++;
         }
+
         int count = 0;
         while (count < referenceString.length){
             String current = referenceString[count];
             if (frame.contains(current)){
                 if (printProcess)
                     System.out.print(current+"->Page hit : ");
+                for(int i=0;i<framePeriod.length;i++) framePeriod[i] = framePeriod[i]++;
             }else{
                 if (printProcess)
                     System.out.print(current+"->Page fault : ");
-                pageFaultcount++;
+                pageFaultCount++;
                 int targetIndex = -1;
                 if(frame.contains("")){
                     targetIndex = frame.indexOf("");
@@ -129,23 +124,21 @@ public class Algorithms implements algorithmMethod {
                         String ref = frame.get(i);
                         int countStamp = 0;
                         for (int j=count+1;j<referenceString.length;j++){
-                            frameCount[i]++;
+                            framePeriod[i]++;
                             if (ref == referenceString[j]){
-                                countStamp = frameCount[i];
+                                countStamp = framePeriod[i];
                             }
                         }
-                        if(countStamp != 0) frameCount[i] -= (frameCount[i] - countStamp);
+                        if(countStamp != 0) framePeriod[i] -= (framePeriod[i] - countStamp);
                     }
                     int largestIndex = 0;
-                    for (int i=0;i<frameCount.length;i++){
-                        if(frameCount[i] > frameCount[largestIndex])
+                    for (int i=0;i<framePeriod.length;i++){
+                        if(framePeriod[i] >= framePeriod[largestIndex])
                             largestIndex = i;
                     }
                     targetIndex = largestIndex;
-                    //setallcount = 0
-                    for(int i=0;i<n;i++){
-                        frameCount[i] = 0;
-                    }
+                    //set
+                    framePeriod[targetIndex] = 0;
                 }
                 frame.set(targetIndex,current);
             }
@@ -153,7 +146,7 @@ public class Algorithms implements algorithmMethod {
                 System.out.println(frame);
             count++;
         }
-        return pageFaultcount;
+        return pageFaultCount;
     }
 
 
